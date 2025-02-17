@@ -18,6 +18,8 @@ import { currencyService } from "@/services/currencyService";
 import { Currency } from "@/types/currency";
 
 const ExchangeDetails = () => {
+  const [alert, setAlert] = useState({ show: false, message: "", type: "" });
+
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [fromCurrency, setFromCurrency] = useState<Currency | null>(null);
   const [toCurrency, setToCurrency] = useState<Currency | null>(null);
@@ -58,12 +60,6 @@ const ExchangeDetails = () => {
     loadCurrencies();
   }, []);
 
-  // useEffect(() => {
-  //   if (fromCurrency?.symbol && toCurrency?.symbol) {
-  //     loadExchangeInfo();
-  //   }
-  // }, [fromCurrency?.symbol, toCurrency?.symbol]);
-
   const loadCurrencies = async () => {
     try {
       setLoading(true);
@@ -81,22 +77,6 @@ const ExchangeDetails = () => {
       setLoading(false);
     }
   };
-
-  // const loadExchangeInfo = async () => {
-  //   if (!fromCurrency?.symbol || !toCurrency?.symbol) return;
-
-  //   try {
-  //     const [timeEstimate, range] = await Promise.all([
-  //       currencyService.getEstimatedExchangeTime(fromCurrency.symbol, toCurrency.symbol),
-  //       currencyService.getRange(fromCurrency.symbol, toCurrency.symbol)
-  //     ]);
-
-  //     setEstimatedTime(timeEstimate);
-  //     setExchangeRange(range);
-  //   } catch (err) {
-  //     setError("Failed to load exchange information");
-  //   }
-  // };
 
   const validateWalletAddress = (
     currencySymbol: string,
@@ -148,11 +128,9 @@ const ExchangeDetails = () => {
       if (!isAddressValid) return; // Stop if the address is still invalid
     }
 
-
     try {
       setProcessingExchange(true);
       setError("");
-
 
       const exchange = await currencyService.createExchange({
         fixed: false, // Required in schema but missing in implementation
@@ -164,18 +142,40 @@ const ExchangeDetails = () => {
         user_refund_address: "", // Required in schema but missing in implementation
         user_refund_extra_id: "", // Required in schema but missing in implementation
       });
+      // Show success alert
+      setAlert({
+        show: true,
+        message: "Exchange created successfully!",
+        type: "success",
+      });
 
       // Handle successful exchange - you might want to redirect or show success message
       console.log("Exchange created:", exchange);
+
+      // Auto-hide alert after 5 seconds
+      setTimeout(() => {
+        setAlert({ show: false, message: "", type: "" });
+      }, 5000);
     } catch (err) {
       setError("Failed to create exchange. Please try again.");
+      // Show error alert
+      setAlert({
+        show: true,
+        message: error.message || "Failed to create exchange",
+        type: "error",
+      });
+
+      // Auto-hide error alert after 5 seconds
+      setTimeout(() => {
+        setAlert({ show: false, message: "", type: "" });
+      }, 5000);
     } finally {
       setProcessingExchange(false);
     }
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div className="bg-gray-100 min-h-screen flex items-center justify-center relative">
       <div className="w-full max-w-3xl bg-white rounded-[3rem] shadow-lg">
         {/* Header */}
         <div className="p-10 pb-0">
@@ -343,6 +343,26 @@ const ExchangeDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* Alert Component */}
+      {alert.show && (
+        <div
+          className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg flex items-center justify-between max-w-sm animate-fade-in
+            ${
+              alert.type === "success"
+                ? "bg-green-100 text-green-800 border border-green-300"
+                : "bg-red-100 text-red-800 border border-red-300"
+            }`}
+        >
+          <span className="mr-3">{alert.message}</span>
+          <button
+            onClick={() => setAlert({ show: false, message: "", type: "" })}
+            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          >
+            <span className="text-xl">&times;</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
