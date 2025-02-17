@@ -1,62 +1,84 @@
-"use client"
-import React, { useState } from 'react';
+'use client'
+
+import { MoveLeft } from 'lucide-react'
+import React, { useState } from 'react'
+import { useConnect, useAccount } from 'wagmi'
 
 interface WalletModalProps {
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
+  isOpen: boolean
+  setIsOpen: (isOpen: boolean) => void
 }
 
 const WalletModal: React.FC<WalletModalProps> = ({ isOpen, setIsOpen }) => {
-  const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
-  const [step, setStep] = useState('select'); // 'select' or 'connect'
+  const [step, setStep] = useState('select')
+  const { connectors, connect, status, error } = useConnect()
+  const { isConnected } = useAccount()
 
-  const wallets = [
-    {
-      name: 'MetaMask',
-      icon: '🦊',
-      description: 'Connect to your MetaMask Wallet',
-    },
-    {
-      name: 'Coinbase Wallet',
-      icon: '📱',
-      description: 'Connect to your Coinbase Wallet',
+  const handleWalletSelect = async (connector) => {
+    try {
+      if (connector.id === 'injected' && !window.ethereum) {
+        window.open('https://metamask.io/download/', '_blank')
+        return
+      }
+      setStep('connect')
+      await connect({ connector })
+    } catch (err) {
+      console.error('Connection error:', err)
+      setStep('select')
     }
-  ];
-
-  const handleWalletSelect = (wallet) => {
-    setSelectedWallet(wallet);
-    setStep('connect');
-  };
+  }
 
   const handleBack = () => {
-    setStep('select');
-    setSelectedWallet(null);
-  };
+    setStep('select')
+  }
 
-  const connectWallet = async () => {
-    if (selectedWallet?.name === 'MetaMask') {
-      try {
-        if (window.ethereum) {
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-          setIsOpen(false);
-        } else {
-          window.open('https://metamask.io/download/', '_blank');
-        }
-      } catch (error) {
-        console.error('Error connecting to MetaMask:', error);
-      }
+  React.useEffect(() => {
+    if (isConnected) {
+      setIsOpen(false)
     }
-    // Add Coinbase Wallet connection logic here
-  };
+  }, [isConnected, setIsOpen])
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
+
+  const getWalletIcon = (id: string) => {
+    switch (id) {
+      case 'injected':
+        return '🦊'
+      case 'coinbaseWallet':
+        return '📱'
+      case 'walletConnect':
+        return '🔗'
+      default:
+        return '💳'
+    }
+  }
+
+  const getWalletButtonText = (connector) => {
+    if (connector.id === 'injected') {
+      if (!window.ethereum) {
+        return 'Install MetaMask'
+      }
+      return 'Connect with MetaMask'
+    }
+    return `Connect with ${connector.name}`
+  }
+
+  const getWalletStatus = (connector) => {
+    if (connector.id === 'injected') {
+      if (!window.ethereum) {
+        return 'Click to install'
+      }
+      return 'Connect to your wallet'
+    }
+    return connector.ready ? 'Connect to your wallet' : 'Not available'
+  }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">
-            {step === 'select' ? 'Connect Wallet' : `Connect to ${selectedWallet?.name}`}
+            {step === 'select' ? 'Connect Wallet' : 'Connecting Wallet'}
           </h2>
           <button
             onClick={() => setIsOpen(false)}
@@ -66,19 +88,28 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, setIsOpen }) => {
           </button>
         </div>
 
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-lg">
+            {error.message}
+          </div>
+        )}
+
         {step === 'select' ? (
           <div className="space-y-4">
-            {wallets.map((wallet) => (
+            {connectors.map((connector) => (
               <button
-                key={wallet.name}
-                onClick={() => handleWalletSelect(wallet)}
-                className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-blue-500 transition-all duration-200 group"
+                key={connector.uid}
+                onClick={() => handleWalletSelect(connector)}
+                disabled={!connector.ready && connector.id !== 'injected'}
+                className="w-full flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-blue-500 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-2xl">{wallet.icon}</span>
+                  <span className="text-2xl">{getWalletIcon(connector.id)}</span>
                   <div className="text-left">
-                    <div className="font-semibold">{wallet.name}</div>
-                    <div className="text-sm text-gray-500">{wallet.description}</div>
+                    <div className="font-semibold">{getWalletButtonText(connector)}</div>
+                    <div className="text-sm text-gray-500">
+                      {getWalletStatus(connector)}
+                    </div>
                   </div>
                 </div>
                 <span className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -89,29 +120,30 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, setIsOpen }) => {
           </div>
         ) : (
           <div className="text-center">
-            <div className="text-6xl mb-4">{selectedWallet?.icon}</div>
-            <p className="text-gray-600 mb-6">
-              Connect to {selectedWallet?.name} to start trading cryptocurrencies securely.
-            </p>
-            <div className="space-y-4">
-              <button
-                onClick={connectWallet}
-                className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                Connect {selectedWallet?.name}
-              </button>
-              <button
-                onClick={handleBack}
-                className="w-full text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Back to Wallet Selection
-              </button>
+            <div className="mb-4">
+              {status === 'connecting' ? (
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto" />
+              ) : (
+                <div className="text-6xl mb-4">💳</div>
+              )}
             </div>
+            <p className="text-gray-600 mb-6">
+              {status === 'connecting'
+                ? 'Connecting to wallet...'
+                : 'Opening wallet for connection'}
+            </p>
+            <button
+              onClick={handleBack}
+              className="w-full flex gap-2 bg-gray-100 py-2 items-center justify-center text-gray-600 hover:text-gray-800 transition-colors"
+            >
+             <MoveLeft size={14} /> 
+             <span>Back to Wallet Selection</span>
+            </button>
           </div>
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default WalletModal;
+export default WalletModal
