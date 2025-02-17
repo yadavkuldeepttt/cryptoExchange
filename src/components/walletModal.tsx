@@ -1,8 +1,13 @@
 "use client"
 import React, { useState } from 'react';
 
-const WalletModal = ({ isOpen, setIsOpen }) => {
-  const [selectedWallet, setSelectedWallet] = useState(null);
+interface WalletModalProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}
+
+const WalletModal: React.FC<WalletModalProps> = ({ isOpen, setIsOpen }) => {
+  const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [step, setStep] = useState('select'); // 'select' or 'connect'
 
   const wallets = [

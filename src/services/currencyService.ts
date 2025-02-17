@@ -226,8 +226,8 @@ export const currencyService = {
 
       const requestParams = new URLSearchParams({
         api_key: API_KEY,
-        ...clientInfo
-            });
+        ...clientInfo,
+      });
 
       const response = await fetch(
         `${BASE_URL}/create_exchange?${requestParams}`,
@@ -237,8 +237,7 @@ export const currencyService = {
         }
       );
 
-      console.log(response,"response");
-      
+      console.log(response, "response");
 
       if (!response.ok) {
         const errorData: APIError = await response.json();
