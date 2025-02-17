@@ -8,7 +8,6 @@ interface CryptoSelectorProps {
   className?: string;
 }
 
-
 // Define a mapping between networks and their corresponding background colors
 const networkColors: { [key: string]: string } = {
   ethereum: "bg-blue-500",
@@ -16,10 +15,9 @@ const networkColors: { [key: string]: string } = {
   binance: "bg-yellow-500",
   polygon: "bg-purple-500",
   solana: "bg-green-500",
-  bsc:"bg-yellow-500"
+  bsc: "bg-yellow-500",
   // Add more networks and colors as needed
 };
-
 
 const CryptoSelector = ({
   currencies,
@@ -51,8 +49,8 @@ const CryptoSelector = ({
       currency.symbol.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-   // Get the background color based on the selected currency's network
-   const getNetworkColor = (network: string) => {
+  // Get the background color based on the selected currency's network
+  const getNetworkColor = (network: string) => {
     return networkColors[network] || "bg-gray-500"; // Default color if network is not found
   };
 
@@ -80,7 +78,11 @@ const CryptoSelector = ({
                 {selectedCurrency?.symbol}
               </span>
               {selectedCurrency?.network && (
-                <span className={`px-3 py-[3px] text-white rounded-2xl ${getNetworkColor(selectedCurrency.network)}`}>
+                <span
+                  className={`px-3 py-[3px] text-white uppercase text-[12px] rounded-2xl ${getNetworkColor(
+                    selectedCurrency.network
+                  )}`}
+                >
                   {selectedCurrency.network}
                 </span>
               )}
