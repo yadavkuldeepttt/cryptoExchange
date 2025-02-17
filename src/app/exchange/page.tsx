@@ -222,8 +222,8 @@ const ExchangeDetails = () => {
 
             {exchangeRange && (
               <div className="text-sm text-gray-600 mt-2 px-4">
-                Min: {exchangeRange.min} {fromCurrency?.code} | Max:{" "}
-                {exchangeRange.max} {fromCurrency?.code}
+                Min: {exchangeRange.min} {fromCurrency?.symbol} | Max:{" "}
+                {exchangeRange.max} {fromCurrency?.symbol}
               </div>
             )}
           </div>
