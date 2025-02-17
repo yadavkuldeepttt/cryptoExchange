@@ -148,13 +148,11 @@ const ExchangeDetails = () => {
       if (!isAddressValid) return; // Stop if the address is still invalid
     }
 
-    console.log("after address");
 
     try {
       setProcessingExchange(true);
       setError("");
 
-      console.log(fromCurrency, "fromCurrency");
 
       const exchange = await currencyService.createExchange({
         fixed: false, // Required in schema but missing in implementation
@@ -163,7 +161,7 @@ const ExchangeDetails = () => {
         amount: fromCrypto.amount.toString(),
         address_to: address,
         extra_id_to: "", // Required in schema but missing in implementation
-        user_refund_address: address, // Required in schema but missing in implementation
+        user_refund_address: "", // Required in schema but missing in implementation
         user_refund_extra_id: "", // Required in schema but missing in implementation
       });
 

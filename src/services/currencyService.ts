@@ -1,6 +1,7 @@
 // services/currencyService.ts
 
 import { Currency, CurrencyPair, APIError } from "../types/currency";
+import axios from "axios";
 
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 const BASE_URL = process.env.NEXT_PUBLIC_REQUEST_URL;
@@ -214,7 +215,13 @@ export const currencyService = {
     user_refund_address: string;
     user_refund_extra_id: string;
   }) {
+    console.log(params,"params found");
+
     try {
+
+      console.log(params,"params found");
+      
+
       const clientInfo = getClientInfo();
       if (!clientInfo) {
         throw new Error("Unable to get client information");
@@ -226,28 +233,23 @@ export const currencyService = {
 
       const requestParams = new URLSearchParams({
         api_key: API_KEY,
-        ...clientInfo,
       });
 
-      const response = await fetch(
-        `${BASE_URL}/create_exchange?${requestParams}`,
-        {
-          method: "POST",
-          headers: getHeaders(),
-        }
-      );
+      const response = await axios.post(`${BASE_URL}/create_exchange?${requestParams}`, params);
+
 
       console.log(response, "response");
 
-      if (!response.ok) {
-        const errorData: APIError = await response.json();
-        throw new APIResponseError(
-          response.status,
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
+      if (response.status === 200) {
+        return response.data;
       }
 
-      return response.json();
+      throw new APIResponseError(
+        response.status,
+        response.data?.message || `HTTP error! status: ${response.status}`
+      );
+      
+
     } catch (error) {
       if (error instanceof APIResponseError) {
         throw error;
